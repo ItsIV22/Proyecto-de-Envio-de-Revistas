@@ -1,0 +1,121 @@
+/* Variables globales */
+:root {
+    --primary-color: #0f172a; /* Corporate Dark Blue */
+    --accent-color: #3b82f6; /* Blue Accent */
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --background-light: #f8fafc;
+    --surface-color: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    
+    /* Social Media / Cliente theme colors */
+    --social-bg: #f3f4f6;
+    --social-card: #ffffff;
+    --social-accent: #8b5cf6; /* Violet vibrant */
+    --social-text: #111827;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--background-light);
+    color: var(--text-primary);
+}
+
+/* --- LOGIN --- */
+.login-body {
+    background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+}
+.login-card {
+    border: none;
+    border-radius: 12px; /* Moderado, no tan redondeado */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+.brand-text {
+    color: var(--primary-color);
+    letter-spacing: -0.5px;
+}
+.btn-login {
+    background-color: var(--primary-color);
+    border: none;
+    transition: all 0.3s ease;
+}
+.btn-login:hover {
+    background-color: #1e293b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+/* --- ADMIN DASHBOARD (Corporate Theme) --- */
+.admin-navbar {
+    background-color: var(--primary-color);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.admin-navbar .navbar-brand, .admin-navbar .nav-link {
+    color: #f8fafc !important;
+}
+.admin-navbar .nav-link:hover {
+    color: #94a3b8 !important;
+}
+.card-corporate {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px; /* Menos redondeado, más empresarial */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.card-header-corporate {
+    background-color: var(--surface-color);
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+}
+.table-hover tbody tr:hover {
+    background-color: #f1f5f9;
+}
+.badge-pendiente { background-color: var(--warning-color); color: white; }
+.badge-transito { background-color: var(--accent-color); color: white; }
+.badge-entregado { background-color: var(--success-color); color: white; }
+
+/* --- CLIENTE VIEW (Social Theme) --- */
+.cliente-body {
+    background-color: var(--social-bg);
+}
+.cliente-navbar {
+    background-color: var(--social-card);
+    border-bottom: 1px solid #e5e7eb;
+}
+.cliente-navbar .navbar-brand {
+    color: var(--social-accent) !important;
+    font-weight: 700;
+}
+.cliente-navbar .nav-link {
+    color: var(--social-text) !important;
+    font-weight: 500;
+}
+.card-social {
+    border: none;
+    border-radius: 16px; /* Un poco más dinámico para cliente */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-social:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+.btn-social {
+    background-color: var(--social-accent);
+    border: none;
+    border-radius: 20px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    transition: background-color 0.3s;
+}
+.btn-social:hover {
+    background-color: #7c3aed;
+}
+
+/* Utils */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
