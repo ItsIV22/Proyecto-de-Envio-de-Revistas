@@ -1,6 +1,6 @@
 /**
  * admin.js
- * Lógica para el panel de administración, catálogo de entidades y gestión de envíos
+ * Lógica para el panel de administración, buscador de catálogos y bloqueo de envíos
  */
 
 let envioModal;
@@ -10,8 +10,12 @@ let personaModal;
 let agenciaModal;
 let credentialsModal;
 
-// Almacén en memoria para filtros en tiempo real
+// Almacenes en memoria para filtros en tiempo real
 let allEnvios = [];
+let allRevistas = [];
+let allEjemplares = [];
+let allPersonas = [];
+let allAgencias = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Verificar sesión admin
@@ -35,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     agenciaModal = new bootstrap.Modal(document.getElementById('agenciaModal'));
     credentialsModal = new bootstrap.Modal(document.getElementById('credentialsModal'));
     
-    // Cargar estadísticas y envíos
+    // Cargar estadísticas y envíos iniciales
     loadStats();
     loadEnvios();
 
@@ -46,9 +50,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('personaForm').addEventListener('submit', handlePersonaSubmit);
     document.getElementById('agenciaForm').addEventListener('submit', handleAgenciaSubmit);
 
-    // Event Listeners para búsqueda y filtrado en tiempo real
+    // Event Listeners para búsqueda en tiempo real
     document.getElementById('searchEnvios').addEventListener('input', filterEnvios);
     document.getElementById('filterEstado').addEventListener('change', filterEnvios);
+    document.getElementById('searchRevistas').addEventListener('input', filterRevistas);
+    document.getElementById('searchEjemplares').addEventListener('input', filterEjemplares);
+    document.getElementById('searchPersonas').addEventListener('input', filterPersonas);
+    document.getElementById('searchAgencias').addEventListener('input', filterAgencias);
 });
 
 /**
@@ -122,15 +130,12 @@ function showTab(tabName) {
 async function loadEnvios() {
     try {
         allEnvios = await fetchAPI('envios.php');
-        filterEnvios(); // Aplica búsqueda y renderiza
+        filterEnvios();
     } catch (e) {
         showToast("Error al cargar envíos", "error");
     }
 }
 
-/**
- * Filtra envíos en tiempo real del lado del cliente
- */
 function filterEnvios() {
     const searchText = document.getElementById('searchEnvios').value.toLowerCase();
     const filterEstado = document.getElementById('filterEstado').value;
@@ -150,9 +155,6 @@ function filterEnvios() {
     renderEnviosTable(filtered);
 }
 
-/**
- * Renderiza la tabla de envíos con controles rápidos de estado
- */
 function renderEnviosTable(envios) {
     const tbody = document.getElementById('enviosTableBody');
     tbody.innerHTML = '';
@@ -168,6 +170,10 @@ function renderEnviosTable(envios) {
         else if (e.estado === 'En tránsito') borderClass = 'border-primary';
         else if (e.estado === 'Entregado') borderClass = 'border-success';
 
+        // Si ya está Entregado, deshabilitamos select y editar
+        const isEntregado = e.estado === 'Entregado';
+        const disabledAttr = isEntregado ? 'disabled' : '';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>#${e.id_envio}</td>
@@ -179,6 +185,7 @@ function renderEnviosTable(envios) {
             <td>
                 <select class="form-select form-select-sm border fw-bold text-center ${borderClass}" 
                         style="width: 130px; font-size: 0.85rem;" 
+                        ${disabledAttr}
                         onchange="updateEnvioEstado(${e.id_envio}, this.value)">
                     <option value="Pendiente" ${e.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
                     <option value="En tránsito" ${e.estado === 'En tránsito' ? 'selected' : ''}>En tránsito</option>
@@ -186,7 +193,7 @@ function renderEnviosTable(envios) {
                 </select>
             </td>
             <td>
-                <button class="btn btn-sm btn-outline-primary px-2" onclick='editEnvio(${JSON.stringify(e)})'>Editar</button>
+                <button class="btn btn-sm btn-outline-primary px-2" ${disabledAttr} onclick='editEnvio(${JSON.stringify(e)})'>Editar</button>
                 <button class="btn btn-sm btn-outline-danger px-2" onclick="deleteEnvio(${e.id_envio})">Borrar</button>
             </td>
         `;
@@ -194,12 +201,8 @@ function renderEnviosTable(envios) {
     });
 }
 
-/**
- * Actualiza el estado directamente desde la tabla
- */
 async function updateEnvioEstado(id_envio, nuevo_estado) {
     try {
-        // Obtenemos el envío actual para no sobreescribir datos como agencia/guía si ya existen
         const envioActual = allEnvios.find(e => e.id_envio === id_envio);
         
         const payload = {
@@ -212,11 +215,11 @@ async function updateEnvioEstado(id_envio, nuevo_estado) {
 
         await fetchAPI('envios.php', { method: 'PUT', body: payload });
         showToast("Estado actualizado correctamente");
-        loadStats(); // Refrescar contadores
-        loadEnvios(); // Recargar datos
+        loadStats();
+        loadEnvios();
     } catch (error) {
-        showToast("Error al actualizar estado: " + error.message, "error");
-        loadEnvios(); // Volver al estado anterior
+        showToast(error.message, "error");
+        loadEnvios();
     }
 }
 
@@ -255,6 +258,10 @@ async function openEnvioModal() {
     document.getElementById('envio_id').value = '';
     document.getElementById('envioModalTitle').textContent = 'Nuevo Envío';
     await loadSelectOptions();
+    
+    // Asegurar que el select del estado en modal esté habilitado
+    document.getElementById('envio_estado').disabled = false;
+    
     envioModal.show();
 }
 
@@ -269,6 +276,10 @@ async function editEnvio(envio) {
     document.getElementById('envio_guia').value = envio.numero_guia || '';
     document.getElementById('envio_fecha').value = envio.fecha_despacho || '';
     document.getElementById('envio_estado').value = envio.estado;
+    
+    // Si ya está entregado, deshabilitamos la edición completa (por seguridad extra)
+    const isEntregado = envio.estado === 'Entregado';
+    document.getElementById('envio_estado').disabled = isEntregado;
     
     envioModal.show();
 }
@@ -325,27 +336,47 @@ async function deleteEnvio(id) {
 
 async function loadRevistas() {
     try {
-        const revistas = await fetchAPI('revistas.php');
-        const tbody = document.getElementById('revistasTableBody');
-        tbody.innerHTML = '';
-
-        revistas.forEach(r => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>#${r.id_revista}</td>
-                <td><strong>${r.titulo}</strong></td>
-                <td>${r.categoria}</td>
-                <td>${r.periodicidad}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick='editRevista(${JSON.stringify(r)})'>Editar</button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteRevista(${r.id_revista})">Eliminar</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+        allRevistas = await fetchAPI('revistas.php');
+        filterRevistas();
     } catch (e) {
         showToast("Error al cargar revistas", "error");
     }
+}
+
+function filterRevistas() {
+    const searchText = document.getElementById('searchRevistas').value.toLowerCase();
+    const filtered = allRevistas.filter(r => 
+        r.titulo.toLowerCase().includes(searchText) ||
+        r.categoria.toLowerCase().includes(searchText) ||
+        r.periodicidad.toLowerCase().includes(searchText) ||
+        r.id_revista.toString().includes(searchText)
+    );
+    renderRevistasTable(filtered);
+}
+
+function renderRevistasTable(revistas) {
+    const tbody = document.getElementById('revistasTableBody');
+    tbody.innerHTML = '';
+
+    if (revistas.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">No se encontraron revistas</td></tr>`;
+        return;
+    }
+
+    revistas.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>#${r.id_revista}</td>
+            <td><strong>${r.titulo}</strong></td>
+            <td>${r.categoria}</td>
+            <td>${r.periodicidad}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick='editRevista(${JSON.stringify(r)})'>Editar</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteRevista(${r.id_revista})">Eliminar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 function openRevistaModal() {
@@ -411,27 +442,47 @@ async function deleteRevista(id) {
 
 async function loadEjemplares() {
     try {
-        const ejemplares = await fetchAPI('ejemplares.php');
-        const tbody = document.getElementById('ejemplaresTableBody');
-        tbody.innerHTML = '';
-
-        ejemplares.forEach(ej => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>#${ej.id_ejemplar}</td>
-                <td><strong>${ej.revista_titulo}</strong></td>
-                <td>Edición #${ej.numero_edicion}</td>
-                <td>${ej.fecha_publicacion}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick='editEjemplar(${JSON.stringify(ej)})'>Editar</button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteEjemplar(${ej.id_ejemplar})">Eliminar</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+        allEjemplares = await fetchAPI('ejemplares.php');
+        filterEjemplares();
     } catch (e) {
         showToast("Error al cargar ejemplares", "error");
     }
+}
+
+function filterEjemplares() {
+    const searchText = document.getElementById('searchEjemplares').value.toLowerCase();
+    const filtered = allEjemplares.filter(ej => 
+        ej.revista_titulo.toLowerCase().includes(searchText) ||
+        ej.numero_edicion.toString().includes(searchText) ||
+        ej.fecha_publicacion.includes(searchText) ||
+        ej.id_ejemplar.toString().includes(searchText)
+    );
+    renderEjemplaresTable(filtered);
+}
+
+function renderEjemplaresTable(ejemplares) {
+    const tbody = document.getElementById('ejemplaresTableBody');
+    tbody.innerHTML = '';
+
+    if (ejemplares.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">No se encontraron ejemplares</td></tr>`;
+        return;
+    }
+
+    ejemplares.forEach(ej => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>#${ej.id_ejemplar}</td>
+            <td><strong>${ej.revista_titulo}</strong></td>
+            <td>Edición #${ej.numero_edicion}</td>
+            <td>${ej.fecha_publicacion}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick='editEjemplar(${JSON.stringify(ej)})'>Editar</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteEjemplar(${ej.id_ejemplar})">Eliminar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 async function loadRevistaSelectOptions() {
@@ -512,28 +563,49 @@ async function deleteEjemplar(id) {
 
 async function loadPersonas() {
     try {
-        const personas = await fetchAPI('personas.php');
-        const tbody = document.getElementById('personasTableBody');
-        tbody.innerHTML = '';
-
-        personas.forEach(p => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>#${p.id_persona}</td>
-                <td><strong>${p.nombre_completo}</strong></td>
-                <td>${p.direccion_envio}</td>
-                <td>${p.ciudad}</td>
-                <td>${p.telefono}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick='editPersona(${JSON.stringify(p)})'>Editar</button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deletePersona(${p.id_persona})">Eliminar</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+        allPersonas = await fetchAPI('personas.php');
+        filterPersonas();
     } catch (e) {
         showToast("Error al cargar personas", "error");
     }
+}
+
+function filterPersonas() {
+    const searchText = document.getElementById('searchPersonas').value.toLowerCase();
+    const filtered = allPersonas.filter(p => 
+        p.nombre_completo.toLowerCase().includes(searchText) ||
+        p.ciudad.toLowerCase().includes(searchText) ||
+        p.direccion_envio.toLowerCase().includes(searchText) ||
+        p.telefono.includes(searchText) ||
+        p.id_persona.toString().includes(searchText)
+    );
+    renderPersonasTable(filtered);
+}
+
+function renderPersonasTable(personas) {
+    const tbody = document.getElementById('personasTableBody');
+    tbody.innerHTML = '';
+
+    if (personas.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">No se encontraron personas</td></tr>`;
+        return;
+    }
+
+    personas.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>#${p.id_persona}</td>
+            <td><strong>${p.nombre_completo}</strong></td>
+            <td>${p.direccion_envio}</td>
+            <td>${p.ciudad}</td>
+            <td>${p.telefono}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick='editPersona(${JSON.stringify(p)})'>Editar</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deletePersona(${p.id_persona})">Eliminar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 function openPersonaModal() {
@@ -577,7 +649,6 @@ async function handlePersonaSubmit(e) {
         personaModal.hide();
         loadPersonas();
         
-        // Si es registro nuevo (no edición) se auto-generaron credenciales
         if (!isEdit && response && response.credentials) {
             document.getElementById('cred_username').textContent = response.credentials.username;
             document.getElementById('cred_password').textContent = response.credentials.password;
@@ -610,26 +681,45 @@ async function deletePersona(id) {
 
 async function loadAgencias() {
     try {
-        const agencias = await fetchAPI('agencias.php');
-        const tbody = document.getElementById('agenciasTableBody');
-        tbody.innerHTML = '';
-
-        agencias.forEach(a => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>#${a.id_agencia}</td>
-                <td><strong>${a.nombre_agencia}</strong></td>
-                <td>${a.contacto}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick='editAgencia(${JSON.stringify(a)})'>Editar</button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteAgencia(${a.id_agencia})">Eliminar</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+        allAgencias = await fetchAPI('agencias.php');
+        filterAgencias();
     } catch (e) {
         showToast("Error al cargar agencias", "error");
     }
+}
+
+function filterAgencias() {
+    const searchText = document.getElementById('searchAgencias').value.toLowerCase();
+    const filtered = allAgencias.filter(a => 
+        a.nombre_agencia.toLowerCase().includes(searchText) ||
+        a.contacto.toLowerCase().includes(searchText) ||
+        a.id_agencia.toString().includes(searchText)
+    );
+    renderAgenciasTable(filtered);
+}
+
+function renderAgenciasTable(agencias) {
+    const tbody = document.getElementById('agenciasTableBody');
+    tbody.innerHTML = '';
+
+    if (agencias.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">No se encontraron agencias</td></tr>`;
+        return;
+    }
+
+    agencias.forEach(a => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>#${a.id_agencia}</td>
+            <td><strong>${a.nombre_agencia}</strong></td>
+            <td>${a.contacto}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick='editAgencia(${JSON.stringify(a)})'>Editar</button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteAgencia(${a.id_agencia})">Eliminar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 function openAgenciaModal() {
@@ -691,9 +781,6 @@ async function deleteAgencia(id) {
    UTILIDADES
    ========================================================================== */
 
-/**
- * Controla visualmente el estado de carga (loader) en los botones
- */
 function setLoadingState(button, isLoading, originalText = "Guardar") {
     if (!button) return;
     

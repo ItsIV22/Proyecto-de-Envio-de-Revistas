@@ -69,33 +69,85 @@ CREATE TABLE envio (
 -- Datos de Prueba (Dummy Data)
 -- -----------------------------------------------------
 
+-- 10 Revistas
 INSERT INTO revista (titulo, categoria, periodicidad) VALUES 
 ('Tecnología Global', 'Tecnología', 'Mensual'),
 ('Cocina de Autor', 'Gastronomía', 'Quincenal'),
-('Viajes Extraordinarios', 'Turismo', 'Bimestral');
+('Viajes Extraordinarios', 'Turismo', 'Bimestral'),
+('Finanzas Clave', 'Economía', 'Mensual'),
+('Salud y Vida', 'Medicina', 'Mensual'),
+('Deporte Extremo', 'Deportes', 'Quincenal'),
+('Diseño y Arte', 'Cultura', 'Trimestral'),
+('Moda Urbana', 'Moda', 'Mensual'),
+('Ciencia Hoy', 'Ciencia', 'Bimestral'),
+('Mundo Motor', 'Automovilismo', 'Mensual');
 
+-- 2 Ejemplares por Revista (Total 20)
 INSERT INTO ejemplar (id_revista, numero_edicion, fecha_publicacion) VALUES 
-(1, 101, '2026-06-01'),
-(1, 102, '2026-07-01'),
-(2, 45, '2026-07-15'),
-(3, 12, '2026-05-01');
+(1, 101, '2026-06-01'), (1, 102, '2026-07-01'),
+(2, 45, '2026-07-15'), (2, 46, '2026-08-01'),
+(3, 12, '2026-05-01'), (3, 13, '2026-07-01'),
+(4, 201, '2026-06-15'), (4, 202, '2026-07-15'),
+(5, 88, '2026-06-01'), (5, 89, '2026-07-01'),
+(6, 15, '2026-07-10'), (6, 16, '2026-07-25'),
+(7, 4, '2026-04-01'), (7, 5, '2026-07-01'),
+(8, 52, '2026-06-20'), (8, 53, '2026-07-20'),
+(9, 30, '2026-05-10'), (9, 31, '2026-07-10'),
+(10, 110, '2026-06-05'), (10, 111, '2026-07-05');
 
+-- 12 Personas (Clientes)
 INSERT INTO persona (nombre_completo, direccion_envio, ciudad, telefono) VALUES 
 ('Juan Pérez', 'Av. Siempre Viva 123', 'Ciudad de México', '555-1234'),
-('María García', 'Calle Falsa 456', 'Guadalajara', '555-5678');
+('María García', 'Calle Falsa 456', 'Guadalajara', '555-5678'),
+('Carlos López', 'Av. Constitución 789', 'Monterrey', '555-9012'),
+('Ana Martínez', 'Calle 5 de Mayo 101', 'Puebla', '555-3456'),
+('Luis Rodríguez', 'Blvd. Diaz Ordaz 202', 'Tijuana', '555-7890'),
+('Carmen Gómez', 'Calle Hidalgo 303', 'León', '555-2345'),
+('José Sánchez', 'Calle 60 #404', 'Mérida', '555-6789'),
+('Laura Díaz', 'Av. Corregidora 505', 'Querétaro', '555-0123'),
+('Alejandro Fernández', 'Calle Carranza 606', 'San Luis Potosí', '555-4567'),
+('Patricia Torres', 'Av. Tulum 707', 'Cancún', '555-8901'),
+('Roberto Ramírez', 'Paseo Tollocan 808', 'Toluca', '555-2345'),
+('Sofia Flores', 'Calle Libertad 909', 'Chihuahua', '555-6789');
 
--- Contraseñas en texto plano para facilidad de prueba. El backend soporta texto plano para estos datos iniciales.
+-- Cuentas de Usuario (Bcrypt hashes para admin, cliente1 y cliente2. Texto plano para el resto que auto-migrará al iniciar sesión)
 INSERT INTO usuario (username, password, rol, id_persona) VALUES 
-('admin', 'admin', 'admin', NULL),
-('cliente1', 'cliente1', 'cliente', 1),
-('cliente2', 'cliente2', 'cliente', 2);
+('admin', '$2y$10$HA5OxsZwqut4BNfvxrYSkOTRRSiwV6SIn4Wuk.RvE0ysHDaeVhqpq', 'admin', NULL),
+('cliente1', '$2y$10$XLgtWHq/rWdF2lg/xvgivuWgkudtU45H2brAK/61jbXnhclwXzRge', 'cliente', 1),
+('cliente2', '$2y$10$fDFEmCEnpDuiTtvbo9927OYupXaKT4C.a1gTiPEnsiNRQc5lkeFYO', 'cliente', 2),
+('cliente3', 'cliente3', 'cliente', 3),
+('cliente4', 'cliente4', 'cliente', 4),
+('cliente5', 'cliente5', 'cliente', 5),
+('cliente6', 'cliente6', 'cliente', 6),
+('cliente7', 'cliente7', 'cliente', 7),
+('cliente8', 'cliente8', 'cliente', 8),
+('cliente9', 'cliente9', 'cliente', 9),
+('cliente10', 'cliente10', 'cliente', 10),
+('cliente11', 'cliente11', 'cliente', 11),
+('cliente12', 'cliente12', 'cliente', 12);
 
+-- 5 Agencias
 INSERT INTO agencia_transporte (nombre_agencia, contacto) VALUES 
 ('FedEx Express', 'contacto@fedex.com'),
 ('DHL Global', 'soporte@dhl.com'),
-('Estafeta Local', 'ayuda@estafeta.com');
+('Estafeta Local', 'ayuda@estafeta.com'),
+('Servientrega', 'servicio@servientrega.com'),
+('Correos de México', 'contacto@correos.gob.mx');
 
+-- 15 Envíos (Varios estados)
 INSERT INTO envio (id_ejemplar, id_persona, id_agencia, fecha_despacho, estado, numero_guia) VALUES 
 (1, 1, 1, '2026-06-05', 'Entregado', 'FDX-99887766'),
 (2, 1, 2, '2026-07-02', 'En tránsito', 'DHL-55443322'),
-(3, 2, NULL, NULL, 'Pendiente', NULL);
+(3, 2, 3, '2026-07-16', 'Pendiente', NULL),
+(5, 3, 4, '2026-05-10', 'Entregado', 'SRV-11223344'),
+(7, 4, 5, '2026-06-20', 'Entregado', 'COR-44332211'),
+(9, 5, 1, '2026-06-08', 'Entregado', 'FDX-11112222'),
+(11, 6, 2, '2026-07-12', 'En tránsito', 'DHL-99998888'),
+(13, 7, NULL, NULL, 'Pendiente', NULL),
+(15, 8, 3, '2026-07-22', 'En tránsito', 'EST-77665544'),
+(17, 9, 4, '2026-05-15', 'Entregado', 'SRV-55667788'),
+(19, 10, NULL, NULL, 'Pendiente', NULL),
+(1, 11, 5, '2026-06-10', 'Entregado', 'COR-88776655'),
+(2, 12, 1, '2026-07-08', 'En tránsito', 'FDX-55554444'),
+(4, 2, NULL, NULL, 'Pendiente', NULL),
+(6, 3, 2, '2026-07-26', 'En tránsito', 'DHL-33332222');

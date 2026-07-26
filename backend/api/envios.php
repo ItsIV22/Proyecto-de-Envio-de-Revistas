@@ -108,6 +108,19 @@ switch ($method) {
         $data = get_json_input();
         
         if(!empty($data['id_envio']) && !empty($data['estado'])) {
+            // Verificar el estado actual del envío en la BD
+            $checkQuery = "SELECT estado FROM envio WHERE id_envio = :id";
+            $checkStmt = $db->prepare($checkQuery);
+            $checkStmt->bindParam(':id', $data['id_envio']);
+            $checkStmt->execute();
+            $estadoActual = $checkStmt->fetchColumn();
+            
+            if ($estadoActual === 'Entregado') {
+                http_response_code(400);
+                echo json_encode(["message" => "Un envío con estado 'Entregado' no puede ser modificado."]);
+                exit();
+            }
+
             // Actualización parcial (estado, agencia, etc)
             $query = "UPDATE envio SET estado = :estado, id_agencia = :agencia, fecha_despacho = :fecha, numero_guia = :guia WHERE id_envio = :id";
             $stmt = $db->prepare($query);

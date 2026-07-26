@@ -7,12 +7,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/x-icon" href="includes/magazine_3724.ico">
     <style>
         .tab-content { display: none; }
         .tab-content.active-tab { display: block; }
     </style>
 </head>
-<body class="bg-light">
+<body class="bg-light d-flex flex-column min-vh-100">
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg admin-navbar mb-4">
@@ -148,9 +149,17 @@
         <div id="tab-revistas" class="tab-content">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="mb-0 text-primary fw-bold">Gestión de Revistas</h4>
-                <button class="btn btn-primary" onclick="openRevistaModal()">+ Nueva Revista</button>
+                <button class="btn btn-primary btn-sm px-3" onclick="openRevistaModal()">+ Nueva Revista</button>
             </div>
-            <div class="card card-corporate">
+            
+            <!-- Buscador Revistas -->
+            <div class="card card-corporate mb-3 shadow-sm border-0">
+                <div class="card-body py-2 px-3">
+                    <input type="text" id="searchRevistas" class="form-control form-control-sm" placeholder="Buscar por título, categoría o periodicidad...">
+                </div>
+            </div>
+
+            <div class="card card-corporate shadow-sm">
                 <div class="card-body p-0 table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="card-header-corporate">
@@ -172,9 +181,17 @@
         <div id="tab-ejemplares" class="tab-content">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="mb-0 text-primary fw-bold">Gestión de Ejemplares</h4>
-                <button class="btn btn-primary" onclick="openEjemplarModal()">+ Nuevo Ejemplar</button>
+                <button class="btn btn-primary btn-sm px-3" onclick="openEjemplarModal()">+ Nuevo Ejemplar</button>
             </div>
-            <div class="card card-corporate">
+
+            <!-- Buscador Ejemplares -->
+            <div class="card card-corporate mb-3 shadow-sm border-0">
+                <div class="card-body py-2 px-3">
+                    <input type="text" id="searchEjemplares" class="form-control form-control-sm" placeholder="Buscar por título de revista o número de edición...">
+                </div>
+            </div>
+
+            <div class="card card-corporate shadow-sm">
                 <div class="card-body p-0 table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="card-header-corporate">
@@ -196,9 +213,17 @@
         <div id="tab-personas" class="tab-content">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="mb-0 text-primary fw-bold">Gestión de Personas (Clientes)</h4>
-                <button class="btn btn-primary" onclick="openPersonaModal()">+ Nueva Persona</button>
+                <button class="btn btn-primary btn-sm px-3" onclick="openPersonaModal()">+ Nueva Persona</button>
             </div>
-            <div class="card card-corporate">
+
+            <!-- Buscador Personas -->
+            <div class="card card-corporate mb-3 shadow-sm border-0">
+                <div class="card-body py-2 px-3">
+                    <input type="text" id="searchPersonas" class="form-control form-control-sm" placeholder="Buscar por nombre, dirección, ciudad o teléfono...">
+                </div>
+            </div>
+
+            <div class="card card-corporate shadow-sm">
                 <div class="card-body p-0 table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="card-header-corporate">
@@ -221,9 +246,17 @@
         <div id="tab-agencias" class="tab-content">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="mb-0 text-primary fw-bold">Gestión de Agencias de Transporte</h4>
-                <button class="btn btn-primary" onclick="openAgenciaModal()">+ Nueva Agencia</button>
+                <button class="btn btn-primary btn-sm px-3" onclick="openAgenciaModal()">+ Nueva Agencia</button>
             </div>
-            <div class="card card-corporate">
+
+            <!-- Buscador Agencias -->
+            <div class="card card-corporate mb-3 shadow-sm border-0">
+                <div class="card-body py-2 px-3">
+                    <input type="text" id="searchAgencias" class="form-control form-control-sm" placeholder="Buscar por nombre de agencia o contacto/email...">
+                </div>
+            </div>
+
+            <div class="card card-corporate shadow-sm">
                 <div class="card-body p-0 table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="card-header-corporate">
@@ -429,6 +462,11 @@
             </div>
         </div>
     </div>
+
+    <!-- Footer de créditos -->
+    <footer class="text-center py-3 text-muted small mt-auto" style="background: rgba(255, 255, 255, 0.8); border-top: 1px solid #e2e8f0;">
+        <p class="mb-0">© 2026 Revistas Express. Icono Revista por <a href="https://icon-icons.com/es/authors/10-icons8" target="_blank" rel="noopener" class="text-secondary fw-semibold">Icons8 en Icon-Icons.com</a></p>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/app.js"></script>
