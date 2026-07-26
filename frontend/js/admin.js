@@ -1,6 +1,6 @@
 /**
  * admin.js
- * Lógica para el panel de administración y sus módulos de catálogo
+ * Lógica para el panel de administración, catálogo de entidades y gestión de envíos
  */
 
 let envioModal;
@@ -8,12 +8,16 @@ let revistaModal;
 let ejemplarModal;
 let personaModal;
 let agenciaModal;
+let credentialsModal;
+
+// Almacén en memoria para filtros en tiempo real
+let allEnvios = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Verificar sesión admin
     try {
         const session = await fetchAPI('auth.php?action=session');
-        if (!session.logged_in || session.user.role !== 'admin') {
+        if (!session || !session.logged_in || session.user.role !== 'admin') {
             window.location.href = 'index.html';
             return;
         }
@@ -29,8 +33,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     ejemplarModal = new bootstrap.Modal(document.getElementById('ejemplarModal'));
     personaModal = new bootstrap.Modal(document.getElementById('personaModal'));
     agenciaModal = new bootstrap.Modal(document.getElementById('agenciaModal'));
+    credentialsModal = new bootstrap.Modal(document.getElementById('credentialsModal'));
     
-    // Cargar envíos al iniciar
+    // Cargar estadísticas y envíos
+    loadStats();
     loadEnvios();
 
     // Registrar Event Listeners para Formularios
@@ -39,13 +45,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('ejemplarForm').addEventListener('submit', handleEjemplarSubmit);
     document.getElementById('personaForm').addEventListener('submit', handlePersonaSubmit);
     document.getElementById('agenciaForm').addEventListener('submit', handleAgenciaSubmit);
+
+    // Event Listeners para búsqueda y filtrado en tiempo real
+    document.getElementById('searchEnvios').addEventListener('input', filterEnvios);
+    document.getElementById('filterEstado').addEventListener('change', filterEnvios);
 });
+
+/**
+ * Cargar estadísticas globales del sistema
+ */
+async function loadStats() {
+    try {
+        const response = await fetchAPI('stats.php');
+        if (response && response.stats) {
+            const s = response.stats;
+            document.getElementById('stat-envios-total').textContent = s.envios_total;
+            document.getElementById('stat-envios-pendientes').textContent = s.envios_pendientes;
+            document.getElementById('stat-personas-total').textContent = s.personas_total;
+            document.getElementById('stat-ejemplares-total').textContent = s.ejemplares_total;
+        }
+    } catch (e) {
+        console.error("Error al cargar estadísticas", e);
+    }
+}
 
 /**
  * Control de navegación entre Pestañas (Tabs)
  */
 function showTab(tabName) {
-    // Alternar clases de contenido
     const tabs = document.querySelectorAll('.tab-content');
     tabs.forEach(t => t.classList.remove('active-tab'));
     
@@ -54,7 +81,6 @@ function showTab(tabName) {
         target.classList.add('active-tab');
     }
 
-    // Alternar clases activas de la barra de navegación
     const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
     navLinks.forEach(link => link.classList.remove('active'));
     
@@ -63,11 +89,17 @@ function showTab(tabName) {
         activeLink.classList.add('active');
     }
 
-    // Cargar los datos correspondientes a la pestaña seleccionada
+    // Ocultar o mostrar contenedor de estadísticas globales (solo visible en Envíos)
+    const statsContainer = document.getElementById('stats-container');
+    if (tabName === 'envios') {
+        statsContainer.classList.remove('d-none');
+        loadStats();
+        loadEnvios();
+    } else {
+        statsContainer.classList.add('d-none');
+    }
+
     switch (tabName) {
-        case 'envios':
-            loadEnvios();
-            break;
         case 'revistas':
             loadRevistas();
             break;
@@ -89,34 +121,102 @@ function showTab(tabName) {
 
 async function loadEnvios() {
     try {
-        const envios = await fetchAPI('envios.php');
-        const tbody = document.getElementById('enviosTableBody');
-        tbody.innerHTML = '';
-
-        envios.forEach(e => {
-            let badgeClass = '';
-            if (e.estado === 'Pendiente') badgeClass = 'badge-pendiente';
-            else if (e.estado === 'En tránsito') badgeClass = 'badge-transito';
-            else if (e.estado === 'Entregado') badgeClass = 'badge-entregado';
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>#${e.id_envio}</td>
-                <td>${e.revista_titulo} (Ed. ${e.numero_edicion})</td>
-                <td>${e.nombre_completo}</td>
-                <td>${e.nombre_agencia || '<span class="text-muted">Sin asignar</span>'}</td>
-                <td>${e.numero_guia || '-'}</td>
-                <td>${e.fecha_despacho || '-'}</td>
-                <td><span class="badge ${badgeClass}">${e.estado}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick='editEnvio(${JSON.stringify(e)})'>Editar</button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteEnvio(${e.id_envio})">Eliminar</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+        allEnvios = await fetchAPI('envios.php');
+        filterEnvios(); // Aplica búsqueda y renderiza
     } catch (e) {
         showToast("Error al cargar envíos", "error");
+    }
+}
+
+/**
+ * Filtra envíos en tiempo real del lado del cliente
+ */
+function filterEnvios() {
+    const searchText = document.getElementById('searchEnvios').value.toLowerCase();
+    const filterEstado = document.getElementById('filterEstado').value;
+
+    const filtered = allEnvios.filter(e => {
+        const matchesSearch = 
+            e.nombre_completo.toLowerCase().includes(searchText) ||
+            e.revista_titulo.toLowerCase().includes(searchText) ||
+            (e.numero_guia && e.numero_guia.toLowerCase().includes(searchText)) ||
+            e.id_envio.toString().includes(searchText);
+            
+        const matchesEstado = filterEstado === "" || e.estado === filterEstado;
+
+        return matchesSearch && matchesEstado;
+    });
+
+    renderEnviosTable(filtered);
+}
+
+/**
+ * Renderiza la tabla de envíos con controles rápidos de estado
+ */
+function renderEnviosTable(envios) {
+    const tbody = document.getElementById('enviosTableBody');
+    tbody.innerHTML = '';
+
+    if (envios.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">No se encontraron envíos</td></tr>`;
+        return;
+    }
+
+    envios.forEach(e => {
+        let borderClass = '';
+        if (e.estado === 'Pendiente') borderClass = 'border-warning';
+        else if (e.estado === 'En tránsito') borderClass = 'border-primary';
+        else if (e.estado === 'Entregado') borderClass = 'border-success';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>#${e.id_envio}</td>
+            <td><strong>${e.revista_titulo}</strong> <span class="text-muted">(Ed. ${e.numero_edicion})</span></td>
+            <td>${e.nombre_completo}</td>
+            <td>${e.nombre_agencia || '<span class="text-muted small">Sin asignar</span>'}</td>
+            <td>${e.numero_guia || '-'}</td>
+            <td>${e.fecha_despacho || '-'}</td>
+            <td>
+                <select class="form-select form-select-sm border fw-bold text-center ${borderClass}" 
+                        style="width: 130px; font-size: 0.85rem;" 
+                        onchange="updateEnvioEstado(${e.id_envio}, this.value)">
+                    <option value="Pendiente" ${e.estado === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                    <option value="En tránsito" ${e.estado === 'En tránsito' ? 'selected' : ''}>En tránsito</option>
+                    <option value="Entregado" ${e.estado === 'Entregado' ? 'selected' : ''}>Entregado</option>
+                </select>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary px-2" onclick='editEnvio(${JSON.stringify(e)})'>Editar</button>
+                <button class="btn btn-sm btn-outline-danger px-2" onclick="deleteEnvio(${e.id_envio})">Borrar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+/**
+ * Actualiza el estado directamente desde la tabla
+ */
+async function updateEnvioEstado(id_envio, nuevo_estado) {
+    try {
+        // Obtenemos el envío actual para no sobreescribir datos como agencia/guía si ya existen
+        const envioActual = allEnvios.find(e => e.id_envio === id_envio);
+        
+        const payload = {
+            id_envio: id_envio,
+            estado: nuevo_estado,
+            id_agencia: envioActual ? envioActual.id_agencia : null,
+            numero_guia: envioActual ? envioActual.numero_guia : null,
+            fecha_despacho: envioActual ? envioActual.fecha_despacho : null
+        };
+
+        await fetchAPI('envios.php', { method: 'PUT', body: payload });
+        showToast("Estado actualizado correctamente");
+        loadStats(); // Refrescar contadores
+        loadEnvios(); // Recargar datos
+    } catch (error) {
+        showToast("Error al actualizar estado: " + error.message, "error");
+        loadEnvios(); // Volver al estado anterior
     }
 }
 
@@ -175,9 +275,12 @@ async function editEnvio(envio) {
 
 async function handleEnvioSubmit(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     const id = document.getElementById('envio_id').value;
     const isEdit = !!id;
     
+    setLoadingState(btn, true);
+
     const payload = {
         id_ejemplar: document.getElementById('envio_ejemplar').value,
         id_persona: document.getElementById('envio_persona').value,
@@ -194,9 +297,12 @@ async function handleEnvioSubmit(e) {
         await fetchAPI('envios.php', { method, body: payload });
         showToast(isEdit ? "Envío actualizado" : "Envío creado");
         envioModal.hide();
+        loadStats();
         loadEnvios();
     } catch (error) {
         showToast(error.message, "error");
+    } finally {
+        setLoadingState(btn, false, "Guardar");
     }
 }
 
@@ -205,6 +311,7 @@ async function deleteEnvio(id) {
         try {
             await fetchAPI(`envios.php?id=${id}`, { method: 'DELETE' });
             showToast("Envío eliminado");
+            loadStats();
             loadEnvios();
         } catch (e) {
             showToast(e.message, "error");
@@ -226,7 +333,7 @@ async function loadRevistas() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>#${r.id_revista}</td>
-                <td>${r.titulo}</td>
+                <td><strong>${r.titulo}</strong></td>
                 <td>${r.categoria}</td>
                 <td>${r.periodicidad}</td>
                 <td>
@@ -259,8 +366,11 @@ function editRevista(r) {
 
 async function handleRevistaSubmit(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     const id = document.getElementById('revista_id').value;
     const isEdit = !!id;
+
+    setLoadingState(btn, true);
 
     const payload = {
         titulo: document.getElementById('revista_titulo').value,
@@ -278,6 +388,8 @@ async function handleRevistaSubmit(e) {
         loadRevistas();
     } catch (error) {
         showToast(error.message, "error");
+    } finally {
+        setLoadingState(btn, false, "Guardar");
     }
 }
 
@@ -307,7 +419,7 @@ async function loadEjemplares() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>#${ej.id_ejemplar}</td>
-                <td>${ej.revista_titulo}</td>
+                <td><strong>${ej.revista_titulo}</strong></td>
                 <td>Edición #${ej.numero_edicion}</td>
                 <td>${ej.fecha_publicacion}</td>
                 <td>
@@ -355,8 +467,11 @@ async function editEjemplar(ej) {
 
 async function handleEjemplarSubmit(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     const id = document.getElementById('ejemplar_id').value;
     const isEdit = !!id;
+
+    setLoadingState(btn, true);
 
     const payload = {
         id_revista: document.getElementById('ejemplar_revista_select').value,
@@ -374,6 +489,8 @@ async function handleEjemplarSubmit(e) {
         loadEjemplares();
     } catch (error) {
         showToast(error.message, "error");
+    } finally {
+        setLoadingState(btn, false, "Guardar");
     }
 }
 
@@ -403,7 +520,7 @@ async function loadPersonas() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>#${p.id_persona}</td>
-                <td>${p.nombre_completo}</td>
+                <td><strong>${p.nombre_completo}</strong></td>
                 <td>${p.direccion_envio}</td>
                 <td>${p.ciudad}</td>
                 <td>${p.telefono}</td>
@@ -438,8 +555,11 @@ function editPersona(p) {
 
 async function handlePersonaSubmit(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     const id = document.getElementById('persona_id').value;
     const isEdit = !!id;
+
+    setLoadingState(btn, true);
 
     const payload = {
         nombre_completo: document.getElementById('persona_nombre').value,
@@ -452,17 +572,28 @@ async function handlePersonaSubmit(e) {
 
     try {
         const method = isEdit ? 'PUT' : 'POST';
-        await fetchAPI('personas.php', { method, body: payload });
-        showToast(isEdit ? "Persona actualizada" : "Persona registrada");
+        const response = await fetchAPI('personas.php', { method, body: payload });
+        
         personaModal.hide();
         loadPersonas();
+        
+        // Si es registro nuevo (no edición) se auto-generaron credenciales
+        if (!isEdit && response && response.credentials) {
+            document.getElementById('cred_username').textContent = response.credentials.username;
+            document.getElementById('cred_password').textContent = response.credentials.password;
+            credentialsModal.show();
+        } else {
+            showToast(isEdit ? "Persona actualizada" : "Persona registrada");
+        }
     } catch (error) {
         showToast(error.message, "error");
+    } finally {
+        setLoadingState(btn, false, "Guardar");
     }
 }
 
 async function deletePersona(id) {
-    if (confirm("¿Seguro que desea eliminar a esta persona?")) {
+    if (confirm("¿Seguro que desea eliminar a esta persona? Esto también borrará su usuario asociado si existe.")) {
         try {
             await fetchAPI(`personas.php?id=${id}`, { method: 'DELETE' });
             showToast("Persona eliminada");
@@ -487,7 +618,7 @@ async function loadAgencias() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>#${a.id_agencia}</td>
-                <td>${a.nombre_agencia}</td>
+                <td><strong>${a.nombre_agencia}</strong></td>
                 <td>${a.contacto}</td>
                 <td>
                     <button class="btn btn-sm btn-outline-primary me-1" onclick='editAgencia(${JSON.stringify(a)})'>Editar</button>
@@ -518,8 +649,11 @@ function editAgencia(a) {
 
 async function handleAgenciaSubmit(e) {
     e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
     const id = document.getElementById('agencia_id').value;
     const isEdit = !!id;
+
+    setLoadingState(btn, true);
 
     const payload = {
         nombre_agencia: document.getElementById('agencia_nombre').value,
@@ -536,6 +670,8 @@ async function handleAgenciaSubmit(e) {
         loadAgencias();
     } catch (error) {
         showToast(error.message, "error");
+    } finally {
+        setLoadingState(btn, false, "Guardar");
     }
 }
 
@@ -548,5 +684,24 @@ async function deleteAgencia(id) {
         } catch (e) {
             showToast(e.message, "error");
         }
+    }
+}
+
+/* ==========================================================================
+   UTILIDADES
+   ========================================================================== */
+
+/**
+ * Controla visualmente el estado de carga (loader) en los botones
+ */
+function setLoadingState(button, isLoading, originalText = "Guardar") {
+    if (!button) return;
+    
+    if (isLoading) {
+        button.disabled = true;
+        button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...`;
+    } else {
+        button.disabled = false;
+        button.innerHTML = originalText;
     }
 }

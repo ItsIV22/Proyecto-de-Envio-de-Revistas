@@ -26,17 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'login') {
 
     if ($stmt->rowCount() > 0) {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        // Verificamos password: si es un hash de bcrypt o texto plano (para los datos dummy de prueba)
-        $is_password_correct = false;
+        // Verificamos password utilizando password_verify
         if (password_verify($password, $user['password'])) {
-            $is_password_correct = true;
-        } else if ($password === $user['password']) {
-            $is_password_correct = true;
-            // Opcional: Podríamos re-hashear la contraseña aquí y actualizar la BD, pero lo obviaremos por simplicidad.
-        }
-
-        if ($is_password_correct) {
             $_SESSION['user_id'] = $user['id_usuario'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role'] = $user['rol'];

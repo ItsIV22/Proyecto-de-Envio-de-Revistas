@@ -49,13 +49,81 @@
 
     <div class="container-fluid px-4 mb-5">
         
+        <!-- Tarjetas de Métricas Rápidas -->
+        <div class="row g-3 mb-4" id="stats-container">
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="card card-corporate p-3 d-flex flex-row align-items-center shadow-sm">
+                    <div class="bg-primary bg-opacity-10 p-3 rounded text-primary me-3 fs-3">
+                        📦
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small fw-bold">TOTAL ENVÍOS</h6>
+                        <h4 class="fw-bold mb-0" id="stat-envios-total">0</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="card card-corporate p-3 d-flex flex-row align-items-center shadow-sm">
+                    <div class="bg-warning bg-opacity-10 p-3 rounded text-warning me-3 fs-3">
+                        ⏳
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small fw-bold">PENDIENTES</h6>
+                        <h4 class="fw-bold mb-0" id="stat-envios-pendientes">0</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="card card-corporate p-3 d-flex flex-row align-items-center shadow-sm">
+                    <div class="bg-success bg-opacity-10 p-3 rounded text-success me-3 fs-3">
+                        👥
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small fw-bold">CLIENTES</h6>
+                        <h4 class="fw-bold mb-0" id="stat-personas-total">0</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6 col-md-3">
+                <div class="card card-corporate p-3 d-flex flex-row align-items-center shadow-sm">
+                    <div class="bg-info bg-opacity-10 p-3 rounded text-info me-3 fs-3">
+                        📚
+                    </div>
+                    <div>
+                        <h6 class="text-muted mb-1 small fw-bold">EJEMPLARES</h6>
+                        <h4 class="fw-bold mb-0" id="stat-ejemplares-total">0</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Tab: Envíos -->
         <div id="tab-envios" class="tab-content active-tab">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="mb-0 text-primary fw-bold">Gestión de Envíos</h4>
-                <button class="btn btn-primary" onclick="openEnvioModal()">+ Nuevo Envío</button>
+                <button class="btn btn-primary btn-sm px-3" onclick="openEnvioModal()">+ Nuevo Envío</button>
             </div>
-            <div class="card card-corporate">
+            
+            <!-- Buscador y Filtros -->
+            <div class="card card-corporate mb-3 shadow-sm border-0">
+                <div class="card-body py-2 px-3">
+                    <div class="row g-2">
+                        <div class="col-12 col-md-8">
+                            <input type="text" id="searchEnvios" class="form-control form-control-sm" placeholder="Buscar por cliente, revista o número de guía...">
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <select id="filterEstado" class="form-select form-select-sm">
+                                <option value="">Todos los estados</option>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="En tránsito">En tránsito</option>
+                                <option value="Entregado">Entregado</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-corporate shadow-sm">
                 <div class="card-body p-0 table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="card-header-corporate">
@@ -335,6 +403,28 @@
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Guardar</button>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Credenciales Generadas -->
+    <div class="modal fade" id="credentialsModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content card-corporate border-success">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">¡Cliente Registrado con Éxito!</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <p class="mb-3 text-muted">Se ha creado una cuenta de usuario para el cliente con los siguientes accesos temporales:</p>
+                    
+                    <div class="bg-light p-3 rounded border mb-4 text-start">
+                        <div class="mb-2"><strong>Usuario:</strong> <span id="cred_username" class="text-primary font-monospace fs-5"></span></div>
+                        <div><strong>Contraseña Temporal:</strong> <span id="cred_password" class="text-danger font-monospace fs-5"></span></div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-success px-4" data-bs-dismiss="modal">Entendido</button>
                 </div>
             </div>
         </div>
