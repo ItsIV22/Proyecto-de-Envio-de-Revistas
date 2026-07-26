@@ -7,6 +7,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active-tab { display: block; }
+    </style>
 </head>
 <body class="bg-light">
 
@@ -20,19 +24,19 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#" onclick="showTab('envios')">Envíos</a>
+                        <a class="nav-link active" id="nav-envios" href="#" onclick="showTab('envios')">Envíos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showTab('revistas')">Revistas</a>
+                        <a class="nav-link" id="nav-revistas" href="#" onclick="showTab('revistas')">Revistas</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showTab('ejemplares')">Ejemplares</a>
+                        <a class="nav-link" id="nav-ejemplares" href="#" onclick="showTab('ejemplares')">Ejemplares</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showTab('personas')">Personas</a>
+                        <a class="nav-link" id="nav-personas" href="#" onclick="showTab('personas')">Personas</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" onclick="showTab('agencias')">Agencias</a>
+                        <a class="nav-link" id="nav-agencias" href="#" onclick="showTab('agencias')">Agencias</a>
                     </li>
                 </ul>
                 <div class="d-flex align-items-center">
@@ -43,7 +47,7 @@
         </div>
     </nav>
 
-    <div class="container-fluid px-4">
+    <div class="container-fluid px-4 mb-5">
         
         <!-- Tab: Envíos -->
         <div id="tab-envios" class="tab-content active-tab">
@@ -66,17 +70,108 @@
                                 <th>Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="enviosTableBody">
-                            <!-- Data here -->
-                        </tbody>
+                        <tbody id="enviosTableBody"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- Las otras pestañas (Revistas, Ejemplares, Personas, Agencias) se omiten el HTML completo para brevedad de prueba, 
-             pero el script `admin.js` controlará la visibilidad -->
-             
+        <!-- Tab: Revistas -->
+        <div id="tab-revistas" class="tab-content">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0 text-primary fw-bold">Gestión de Revistas</h4>
+                <button class="btn btn-primary" onclick="openRevistaModal()">+ Nueva Revista</button>
+            </div>
+            <div class="card card-corporate">
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="card-header-corporate">
+                            <tr>
+                                <th>ID</th>
+                                <th>Título</th>
+                                <th>Categoría</th>
+                                <th>Periodicidad</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="revistasTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Ejemplares -->
+        <div id="tab-ejemplares" class="tab-content">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0 text-primary fw-bold">Gestión de Ejemplares</h4>
+                <button class="btn btn-primary" onclick="openEjemplarModal()">+ Nuevo Ejemplar</button>
+            </div>
+            <div class="card card-corporate">
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="card-header-corporate">
+                            <tr>
+                                <th>ID</th>
+                                <th>Revista</th>
+                                <th>Número Edición</th>
+                                <th>Fecha Publicación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ejemplaresTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Personas -->
+        <div id="tab-personas" class="tab-content">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0 text-primary fw-bold">Gestión de Personas (Clientes)</h4>
+                <button class="btn btn-primary" onclick="openPersonaModal()">+ Nueva Persona</button>
+            </div>
+            <div class="card card-corporate">
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="card-header-corporate">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre Completo</th>
+                                <th>Dirección Envío</th>
+                                <th>Ciudad</th>
+                                <th>Teléfono</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="personasTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Agencias -->
+        <div id="tab-agencias" class="tab-content">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0 text-primary fw-bold">Gestión de Agencias de Transporte</h4>
+                <button class="btn btn-primary" onclick="openAgenciaModal()">+ Nueva Agencia</button>
+            </div>
+            <div class="card card-corporate">
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="card-header-corporate">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre de la Agencia</th>
+                                <th>Contacto / Email</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agenciasTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Modal Envío (Crear / Actualizar) -->
@@ -117,6 +212,126 @@
                                 <option value="En tránsito">En tránsito</option>
                                 <option value="Entregado">Entregado</option>
                             </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Guardar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Revista -->
+    <div class="modal fade" id="revistaModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content card-corporate">
+                <div class="modal-header card-header-corporate">
+                    <h5 class="modal-title" id="revistaModalTitle">Nueva Revista</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="revistaForm">
+                        <input type="hidden" id="revista_id">
+                        <div class="mb-3">
+                            <label class="form-label">Título</label>
+                            <input type="text" id="revista_titulo" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Categoría</label>
+                            <input type="text" id="revista_categoria" class="form-control" required placeholder="Ej: Tecnología, Cocina">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Periodicidad</label>
+                            <input type="text" id="revista_periodicidad" class="form-control" required placeholder="Ej: Mensual, Quincenal">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Guardar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ejemplar -->
+    <div class="modal fade" id="ejemplarModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content card-corporate">
+                <div class="modal-header card-header-corporate">
+                    <h5 class="modal-title" id="ejemplarModalTitle">Nuevo Ejemplar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="ejemplarForm">
+                        <input type="hidden" id="ejemplar_id">
+                        <div class="mb-3">
+                            <label class="form-label">Revista</label>
+                            <select id="ejemplar_revista_select" class="form-select" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Número de Edición</label>
+                            <input type="number" id="ejemplar_edicion" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Fecha de Publicación</label>
+                            <input type="date" id="ejemplar_fecha" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Guardar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Persona -->
+    <div class="modal fade" id="personaModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content card-corporate">
+                <div class="modal-header card-header-corporate">
+                    <h5 class="modal-title" id="personaModalTitle">Nueva Persona</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="personaForm">
+                        <input type="hidden" id="persona_id">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre Completo</label>
+                            <input type="text" id="persona_nombre" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Dirección de Envío</label>
+                            <textarea id="persona_direccion" class="form-control" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ciudad</label>
+                            <input type="text" id="persona_ciudad" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" id="persona_telefono" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Guardar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Agencia -->
+    <div class="modal fade" id="agenciaModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content card-corporate">
+                <div class="modal-header card-header-corporate">
+                    <h5 class="modal-title" id="agenciaModalTitle">Nueva Agencia</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="agenciaForm">
+                        <input type="hidden" id="agencia_id">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre de la Agencia</label>
+                            <input type="text" id="agencia_nombre" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Contacto / Email</label>
+                            <input type="text" id="agencia_contacto" class="form-control" required>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Guardar</button>
                     </form>
