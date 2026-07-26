@@ -26,8 +26,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'login') {
 
     if ($stmt->rowCount() > 0) {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        // Verificamos password utilizando password_verify
+        // Verificamos password con password_verify y un fallback de texto plano para migración automática
+        $is_password_correct = false;
+        $needs_rehash = false;
+
         if (password_verify($password, $user['password'])) {
+            $is_password_correct = true;
+        } else if ($password === $user['password']) {
+            $is_password_correct = true;
+            $needs_rehash = true;
+        }
+
+        if ($is_password_correct) {
+            // Si estaba en texto plano, la actualizamos automáticamente en la BD a Bcrypt
+            if ($needs_rehash) {
+                try {
+                    $new_hash = password_hash($password, PASSWORD_BCRYPT);
+                    $updateQuery = "UPDATE usuario SET password = :password WHERE id_usuario = :id";
+                    $updateStmt = $db->prepare($updateQuery);
+                    $updateStmt->bindParam(':password', $new_hash);
+                    $updateStmt->bindParam(':id', $user['id_usuario']);
+                    $updateStmt->execute();
+                } catch (Exception $e) {
+                    // Ignorar silenciosamente si no se puede escribir para no bloquear el login
+                }
+            }
+
             $_SESSION['user_id'] = $user['id_usuario'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['role'] = $user['rol'];
