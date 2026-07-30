@@ -26,8 +26,51 @@ switch ($method) {
 
     case 'POST':
         $data = get_json_input();
-        if(!empty($data['nombre_completo']) && !empty($data['direccion_envio']) && !empty($data['ciudad']) && !empty($data['telefono'])) {
-            
+        
+        $nombre = isset($data['nombre_completo']) ? trim(strip_tags($data['nombre_completo'])) : '';
+        $direccion = isset($data['direccion_envio']) ? trim(strip_tags($data['direccion_envio'])) : '';
+        $ciudad = isset($data['ciudad']) ? trim(strip_tags($data['ciudad'])) : '';
+        $telefono = isset($data['telefono']) ? trim(strip_tags($data['telefono'])) : '';
+
+        if(!empty($nombre) && !empty($direccion) && !empty($ciudad) && !empty($telefono)) {
+            // 1. Validar nombre completo
+            if (strlen($nombre) < 3 || strlen($nombre) > 150) {
+                http_response_code(400);
+                echo json_encode(["message" => "El nombre completo debe tener entre 3 y 150 caracteres."]);
+                exit();
+            }
+            if (preg_match('/\d/', $nombre)) {
+                http_response_code(400);
+                echo json_encode(["message" => "El nombre completo no debe contener números."]);
+                exit();
+            }
+
+            // 2. Validar dirección de envío
+            if (strlen($direccion) < 5) {
+                http_response_code(400);
+                echo json_encode(["message" => "La dirección de envío debe tener al menos 5 caracteres."]);
+                exit();
+            }
+
+            // 3. Validar ciudad
+            if (strlen($ciudad) < 2 || strlen($ciudad) > 100) {
+                http_response_code(400);
+                echo json_encode(["message" => "La ciudad debe tener entre 2 y 100 caracteres."]);
+                exit();
+            }
+            if (preg_match('/\d/', $ciudad)) {
+                http_response_code(400);
+                echo json_encode(["message" => "La ciudad no debe contener números."]);
+                exit();
+            }
+
+            // 4. Validar teléfono
+            if (!preg_match('/^\+?[0-9\s\-\(\)]+$/', $telefono) || strlen($telefono) < 7 || strlen($telefono) > 20) {
+                http_response_code(400);
+                echo json_encode(["message" => "El teléfono no es válido. Debe tener entre 7 y 20 caracteres y contener solo números, espacios, guiones o paréntesis."]);
+                exit();
+            }
+
             // Iniciar transacción para asegurar consistencia
             $db->beginTransaction();
             
@@ -35,16 +78,16 @@ switch ($method) {
                 // 1. Insertar la persona
                 $query = "INSERT INTO persona (nombre_completo, direccion_envio, ciudad, telefono) VALUES (:nombre, :direccion, :ciudad, :telefono)";
                 $stmt = $db->prepare($query);
-                $stmt->bindParam(':nombre', $data['nombre_completo']);
-                $stmt->bindParam(':direccion', $data['direccion_envio']);
-                $stmt->bindParam(':ciudad', $data['ciudad']);
-                $stmt->bindParam(':telefono', $data['telefono']);
+                $stmt->bindParam(':nombre', $nombre);
+                $stmt->bindParam(':direccion', $direccion);
+                $stmt->bindParam(':ciudad', $ciudad);
+                $stmt->bindParam(':telefono', $telefono);
                 $stmt->execute();
                 
                 $id_persona = $db->lastInsertId();
                 
                 // 2. Generar nombre de usuario único
-                $parts = explode(' ', trim($data['nombre_completo']));
+                $parts = explode(' ', trim($nombre));
                 $first_name = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $parts[0]));
                 $username = $first_name . rand(100, 999);
                 
@@ -92,14 +135,59 @@ switch ($method) {
 
     case 'PUT':
         $data = get_json_input();
-        if(!empty($data['id_persona'])) {
+        
+        $id_persona = isset($data['id_persona']) ? intval($data['id_persona']) : 0;
+        $nombre = isset($data['nombre_completo']) ? trim(strip_tags($data['nombre_completo'])) : '';
+        $direccion = isset($data['direccion_envio']) ? trim(strip_tags($data['direccion_envio'])) : '';
+        $ciudad = isset($data['ciudad']) ? trim(strip_tags($data['ciudad'])) : '';
+        $telefono = isset($data['telefono']) ? trim(strip_tags($data['telefono'])) : '';
+
+        if($id_persona > 0 && !empty($nombre) && !empty($direccion) && !empty($ciudad) && !empty($telefono)) {
+            // 1. Validar nombre completo
+            if (strlen($nombre) < 3 || strlen($nombre) > 150) {
+                http_response_code(400);
+                echo json_encode(["message" => "El nombre completo debe tener entre 3 y 150 caracteres."]);
+                exit();
+            }
+            if (preg_match('/\d/', $nombre)) {
+                http_response_code(400);
+                echo json_encode(["message" => "El nombre completo no debe contener números."]);
+                exit();
+            }
+
+            // 2. Validar dirección de envío
+            if (strlen($direccion) < 5) {
+                http_response_code(400);
+                echo json_encode(["message" => "La dirección de envío debe tener al menos 5 caracteres."]);
+                exit();
+            }
+
+            // 3. Validar ciudad
+            if (strlen($ciudad) < 2 || strlen($ciudad) > 100) {
+                http_response_code(400);
+                echo json_encode(["message" => "La ciudad debe tener entre 2 y 100 caracteres."]);
+                exit();
+            }
+            if (preg_match('/\d/', $ciudad)) {
+                http_response_code(400);
+                echo json_encode(["message" => "La ciudad no debe contener números."]);
+                exit();
+            }
+
+            // 4. Validar teléfono
+            if (!preg_match('/^\+?[0-9\s\-\(\)]+$/', $telefono) || strlen($telefono) < 7 || strlen($telefono) > 20) {
+                http_response_code(400);
+                echo json_encode(["message" => "El teléfono no es válido. Debe tener entre 7 y 20 caracteres y contener solo números, espacios, guiones o paréntesis."]);
+                exit();
+            }
+
             $query = "UPDATE persona SET nombre_completo = :nombre, direccion_envio = :direccion, ciudad = :ciudad, telefono = :telefono WHERE id_persona = :id";
             $stmt = $db->prepare($query);
-            $stmt->bindParam(':id', $data['id_persona']);
-            $stmt->bindParam(':nombre', $data['nombre_completo']);
-            $stmt->bindParam(':direccion', $data['direccion_envio']);
-            $stmt->bindParam(':ciudad', $data['ciudad']);
-            $stmt->bindParam(':telefono', $data['telefono']);
+            $stmt->bindParam(':id', $id_persona);
+            $stmt->bindParam(':nombre', $nombre);
+            $stmt->bindParam(':direccion', $direccion);
+            $stmt->bindParam(':ciudad', $ciudad);
+            $stmt->bindParam(':telefono', $telefono);
             
             if($stmt->execute()){
                 echo json_encode(["message" => "Persona actualizada."]);
@@ -107,6 +195,9 @@ switch ($method) {
                 http_response_code(503);
                 echo json_encode(["message" => "No se pudo actualizar."]);
             }
+        } else {
+            http_response_code(400);
+            echo json_encode(["message" => "Datos incompletos o inválidos."]);
         }
         break;
 
